@@ -7,6 +7,10 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  updateProfile,
+  deleteUser,
+  updateEmail,
+  updatePassword,
 } from "firebase/auth";
 import { auth } from "@/config/firebase";
 
@@ -35,9 +39,26 @@ export function AuthProvider({ children }) {
 
   const resetPassword = async (email) => sendPasswordResetEmail(auth, email);
 
+  const updateUserProfile = async (profileData) => {
+    try {
+      const { email, ...otherData } = profileData;
+      await updateEmail(auth.currentUser, email);
+      await updateProfile(auth.currentUser, otherData);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const changePassword = async (newPassword) => {
+    return updatePassword(auth.currentUser, newPassword);
+  };
+
+  const deleteAccount = async () => {
+    return deleteUser(auth.currentUser);
+  };
+
   useEffect(() => {
     const unsubuscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log({ currentUser });
       setUser(currentUser);
       setLoading(false);
     });
@@ -54,6 +75,9 @@ export function AuthProvider({ children }) {
         loginWithGoogle,
         logout,
         resetPassword,
+        updateUserProfile,
+        changePassword,
+        deleteAccount,
       }}
     >
       {children}

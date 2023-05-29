@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react";
 
+import { useAuthContext } from "@/contexts/AuthContext";
 import Combobox from "@/components/Combobox";
 
 import MUIDataTable from "mui-datatables";
 
 export default function AddSale() {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [sales, setSales] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [productsFiltered, setProductsFiltered] = useState([]);
   const [sale, setSale] = useState({
-    date: "",
+    user_id: "",
     id: 0,
+    date: "",
     client: "",
     products: [],
     total: 0,
   });
-  const [saleProduct, setSaleProduct] = useState({
+  const [product, setProduct] = useState({
     product: {
+      user_id: "",
       id: 0,
       name: "",
       price: 0,
@@ -23,32 +28,14 @@ export default function AddSale() {
     quantity: 0,
     total: 0,
   });
-  const [sales, setSales] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [productsDropdown, setProductsDropdown] = useState([]);
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    const getProducts = () => {
-      localStorage.getItem("products") &&
-        setProducts(JSON.parse(localStorage.getItem("products")));
-    };
-    const getSales = () => {
-      localStorage.getItem("sales") &&
-        setSales(JSON.parse(localStorage.getItem("sales")));
-    };
-    getProducts();
-    getSales();
-    setIsLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("sales", JSON.stringify(sales));
-      localStorage.setItem("products", JSON.stringify(products));
-
-      setProductsDropdown(products.filter((p) => p.stock > 0));
+    if (user) {
+      getProducts();
+      getSales();
     }
-  }, [isLoaded, sales, products]);
+  }, [user]);
 
   useEffect(() => {
     const total = sale.products.reduce((acc, curr) => acc + curr.total, 0);
@@ -56,93 +43,138 @@ export default function AddSale() {
   }, [sale.products]);
 
   useEffect(() => {
-    const total = saleProduct.quantity * saleProduct.product.price;
-    setSaleProduct({ ...saleProduct, total });
-  }, [saleProduct.quantity]);
+    const total = product.quantity * product.product.price;
+    setProduct({ ...product, total });
+  }, [product.quantity]);
+
+  const getProducts = () => {
+    const allProducts = JSON.parse(localStorage.getItem("products")) || [];
+    setProducts(allProducts.filter((p) => p.user_id === user.uid));
+    setProductsFiltered(
+      allProducts.filter((p) => p.user_id === user.uid && p.stock > 0)
+    );
+  };
+
+  const getSales = () => {
+    const allSales = JSON.parse(localStorage.getItem("sales")) || [];
+    setSales(allSales.filter((s) => s.user_id === user.uid));
+  };
 
   const handleAddProduct = () => {
-    if (saleProduct.name === "") {
+    if (product.product.name === "") {
       alert("Ingrese un producto válido");
       return;
     }
+
+    // Add the product to the sale, if it already exists, update the quantity and total
     const sameProduct = sale.products.find(
       (p) =>
-        p.product.id === saleProduct.product.id &&
-        p.product.name === saleProduct.product.name
+        p.product.id === product.product.id &&
+        p.product.name === product.product.name
     );
     if (sameProduct) {
       const newProducts = sale.products.map((p) => {
-        if (p.product.id === saleProduct.product.id) {
+        if (p.product.id === product.product.id) {
           return {
             ...p,
-            quantity: p.quantity + saleProduct.quantity,
-            total: (p.quantity + saleProduct.quantity) * saleProduct.price,
+            quantity: p.quantity + product.quantity,
+            total: (p.quantity + product.quantity) * product.price,
           };
         }
         return p;
       });
       setSale({ ...sale, products: newProducts });
     } else {
-      setSale({ ...sale, products: [...sale.products, saleProduct] });
+      setSale({
+        ...sale,
+        products: [...sale.products, product],
+      });
     }
-    setProductsDropdown(
-      productsDropdown.filter((p) => p.id !== saleProduct.product.id)
+
+    // Remove the product from the products list
+    setProductsFiltered(
+      productsFiltered.filter((p) => p.id !== product.product.id)
     );
-    setSaleProduct({
-      product: { id: 0, name: "", price: 0, stock: 0 },
+
+    setProduct({
+      product: {
+        user_id: "",
+        id: 0,
+        name: "",
+        price: 0,
+        stock: 0,
+      },
       quantity: 0,
       total: 0,
     });
   };
 
   const handleDeleteProduct = (id) => {
+    // Remove the product from the sale
     const newProducts = sale.products.filter((p) => p.product.id !== id);
     setSale({ ...sale, products: newProducts });
 
+    // Bring the product back to the products list
     const sameProduct = products.find((p) => p.id === id);
-    const sortedProducts = [...productsDropdown, sameProduct].sort(
-      (a, b) => a.id - b.id
+    setProductsFiltered(
+      [...productsFiltered, sameProduct].sort((a, b) => a.id - b.id)
     );
-    setProductsDropdown(sortedProducts);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (sale.total === 0) {
+    if (sale.products.length === 0) {
       alert("Ingrese al menos un producto");
       return;
     }
-    const date = new Date().toLocaleDateString();
-    const id = sales.length + 1;
-    const newSale = { ...sale, date, id };
-    setSales([...sales, newSale]);
-
-    const newProducts = products.map((product) => {
-      const sameProduct = sale.products.find(
-        (p) => p.product.id === product.id
-      );
-      if (sameProduct) {
-        return {
-          ...product,
-          stock: product.stock - sameProduct.quantity,
-        };
-      }
-      return product;
-    });
-    setProducts(newProducts);
+    const newSale = {
+      ...sale,
+      user_id: user.uid,
+      id: sales.length + 1,
+      date: new Date().toLocaleDateString(),
+    };
+    addSale(newSale);
 
     setSale({
-      date: "",
+      user_id: "",
       id: 0,
+      date: "",
       client: "",
       products: [],
       total: 0,
     });
-    setSaleProduct({
-      product: { id: 0, name: "", price: 0, stock: 0 },
+    setProduct({
+      product: {
+        user_id: "",
+        id: 0,
+        name: "",
+        price: 0,
+        stock: 0,
+      },
       quantity: 0,
       total: 0,
     });
+  };
+
+  const addSale = (newSale) => {
+    const allSales = JSON.parse(localStorage.getItem("sales")) || [];
+    localStorage.setItem("sales", JSON.stringify([...allSales, newSale]));
+
+    // Update the stock of the products
+    const allProducts = JSON.parse(localStorage.getItem("products")) || [];
+    const newProducts = allProducts.map((p) => {
+      const sameProduct = newSale.products.find((s) => s.product.id === p.id);
+      if (sameProduct) {
+        return {
+          ...p,
+          stock: p.stock - sameProduct.quantity,
+        };
+      }
+      return p;
+    });
+    localStorage.setItem("products", JSON.stringify(newProducts));
+    getSales();
+    getProducts();
   };
 
   const columns = [
@@ -228,23 +260,27 @@ export default function AddSale() {
               <div>
                 <label>Producto</label>
                 <Combobox
-                  options={productsDropdown.map((p) => ({
+                  options={productsFiltered.map((p) => ({
                     value: p.id,
                     label: p.id + " - " + p.name,
                   }))}
                   onChange={(option) => {
-                    const product = products.find((p) => p.id === option.value);
-                    setSaleProduct({
-                      ...saleProduct,
+                    const sameProduct = products.find(
+                      (p) => p.id === option.value
+                    );
+                    setProduct({
+                      ...product,
                       product: {
-                        id: product.id,
-                        name: product.name,
-                        price: product.price,
-                        stock: product.stock,
+                        user_id: sameProduct.uid,
+                        id: sameProduct.id,
+                        name: sameProduct.name,
+                        price: sameProduct.price,
+                        stock: sameProduct.stock,
                       },
                       quantity: 1,
                     });
                   }}
+                  reset={product.product.name === ""}
                 />
               </div>
               <label>
@@ -252,21 +288,22 @@ export default function AddSale() {
                 <input
                   type="number"
                   min={1}
-                  max={saleProduct.product.stock}
-                  value={saleProduct.quantity || ""}
-                  onChange={(e) =>
-                    setSaleProduct({
-                      ...saleProduct,
+                  max={product.product.stock}
+                  value={product.quantity || ""}
+                  onChange={(e) => {
+                    if (product.product.name === "") return;
+                    setProduct({
+                      ...product,
                       quantity: parseInt(e.target.value),
-                    })
-                  }
+                    });
+                  }}
                 />
               </label>
               <label>
                 Precio
                 <input
                   type="number"
-                  value={saleProduct.product.price || ""}
+                  value={product.product.price || ""}
                   readOnly
                 />
               </label>

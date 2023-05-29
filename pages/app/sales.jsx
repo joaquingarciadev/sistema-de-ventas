@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 
+import { useAuthContext } from "@/contexts/AuthContext";
 import Modal from "@/components/Modal";
+import LayoutPDF from "@/components/LayoutPDF";
 
 import MUIDataTable from "mui-datatables";
-import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
-import DocumentPDF from "@/components/DocumentPDF";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 
 export default function Sales() {
   const [sales, setSales] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [sale, setSale] = useState({
-    date: "",
     id: 0,
+    date: "",
     client: "",
     products: [],
     total: 0,
   });
+  const { user } = useAuthContext();
 
   // This code uses the useState hook to set the value of the isClient variable to true. It then uses the useEffect hook to set the value of the isClient variable to true when the component is mounted.
   // I used this code to solve the problem of the PDF not being generated on the server side.
@@ -25,12 +27,15 @@ export default function Sales() {
   }, []);
 
   useEffect(() => {
-    const getSales = () => {
-      localStorage.getItem("sales") &&
-        setSales(JSON.parse(localStorage.getItem("sales")));
-    };
-    getSales();
-  }, []);
+    if (user) {
+      getSales();
+    }
+  }, [user]);
+
+  const getSales = () => {
+    const allSales = JSON.parse(localStorage.getItem("sales")) || [];
+    setSales(allSales.filter((s) => s.user_id === user.uid));
+  };
 
   const handleClick = (id) => {
     const sale = sales.find((sale) => sale.id === id);
@@ -137,10 +142,16 @@ export default function Sales() {
       <Modal showModal={showModal} setShowModal={setShowModal}>
         <div className="col">
           <div className="space-between">
-            <h3>Detalles de la venta</h3>
+            <h3>Detalle de venta</h3>
             {isClient && (
               <PDFDownloadLink
-                document={<DocumentPDF sale={sale} />}
+                document={
+                  <LayoutPDF
+                    data={{
+                      sale,
+                    }}
+                  />
+                }
                 fileName="document.pdf"
               >
                 {({ blob, url, loading, error }) =>

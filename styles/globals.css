@@ -23,6 +23,10 @@ a {
   color: #212121;
 }
 
+.fa-solid {
+  margin-inline: 16px;
+}
+
 h1,
 h2,
 h3 {
@@ -33,6 +37,7 @@ h3 {
 input,
 textarea,
 button {
+  margin: 5px 0;
   padding: 12px;
   font-family: "Inter", sans-serif;
   border-radius: 6px;
@@ -72,12 +77,6 @@ form {
   gap: 20px;
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
 .row {
   display: flex;
   gap: 20px;
@@ -85,6 +84,12 @@ label {
 
 .row > * {
   flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+  .row {
+    flex-direction: column;
+  }
 }
 
 .col {
@@ -302,7 +307,6 @@ label {
 
 .combobox-input {
   position: relative;
-  margin-top: 5px;
 }
 
 .combobox-btn {
@@ -335,10 +339,9 @@ label {
 }
 
 .combobox-option {
-  margin-bottom: -1px;
   padding: 12px;
   background: #fff;
-  border: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
   cursor: pointer;
 }
 
@@ -406,7 +409,8 @@ label {
 
 .MuiTable-root th,
 .MuiTable-root td {
-  padding: 5px 30px !important;
+  height: 50px !important;
+  padding: 0 30px !important;
 }
 
 .MuiTable-root th * {

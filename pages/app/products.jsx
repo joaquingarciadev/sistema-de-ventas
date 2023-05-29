@@ -1,40 +1,54 @@
 import { useEffect, useState } from "react";
 
+import { useAuthContext } from "@/contexts/AuthContext";
+
 import MUIDataTable from "mui-datatables";
 
 export default function Products() {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [product, setProduct] = useState({
+    user_id: "",
     id: 0,
     name: "",
     price: 0,
     stock: 0,
   });
   const [products, setProducts] = useState([]);
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    setIsLoaded(true);
-    const getProducts = () => {
-      localStorage.getItem("products") &&
-        setProducts(JSON.parse(localStorage.getItem("products")));
-    };
-    getProducts();
-  }, []);
+    if (user) {
+      getProducts();
+    }
+  }, [user]);
 
-  useEffect(() => {
-    if (isLoaded) localStorage.setItem("products", JSON.stringify(products));
-  }, [isLoaded, products]);
+  const getProducts = () => {
+    const allProducts = JSON.parse(localStorage.getItem("products")) || [];
+    setProducts(allProducts.filter((p) => p.user_id === user.uid));
+  };
 
   const handleDeleteProduct = (id) => {
-    const newProducts = products.filter((product) => product.id !== id);
-    setProducts(newProducts);
+    const allProducts = JSON.parse(localStorage.getItem("products")) || [];
+    const newProducts = allProducts.filter((product) => product.id !== id);
+    localStorage.setItem("products", JSON.stringify(newProducts));
+    getProducts();
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const id = products.length + 1;
-    setProducts([...products, { ...product, id }]);
+    const newProduct = {
+      ...product,
+      user_id: user.uid,
+      id: products[products.length - 1]?.id + 1 || 1,
+    };
+    addProduct(newProduct);
     e.target.reset();
+  };
+
+  const addProduct = (newProduct) => {
+    const allProducts = JSON.parse(localStorage.getItem("products")) || [];
+    const newProducts = [...allProducts, newProduct];
+    localStorage.setItem("products", JSON.stringify(newProducts));
+    getProducts();
   };
 
   const columns = [
@@ -117,28 +131,28 @@ export default function Products() {
         </form>
       </div>
       <MUIDataTable
-          title={"Productos"}
-          data={products}
-          columns={[
-            ...columns,
-            {
-              name: "actions",
-              label: "Acciones",
-              options: {
-                customBodyRender: (value, tableMeta, updateValue) => {
-                  return (
-                    <button
-                      onClick={() => handleDeleteProduct(tableMeta.rowData[0])}
-                    >
-                      Eliminar
-                    </button>
-                  );
-                },
+        title={"Productos"}
+        data={products}
+        columns={[
+          ...columns,
+          {
+            name: "actions",
+            label: "Acciones",
+            options: {
+              customBodyRender: (value, tableMeta, updateValue) => {
+                return (
+                  <button
+                    onClick={() => handleDeleteProduct(tableMeta.rowData[0])}
+                  >
+                    Eliminar
+                  </button>
+                );
               },
             },
-          ]}
-          options={options}
-        />
+          },
+        ]}
+        options={options}
+      />
     </div>
   );
 }

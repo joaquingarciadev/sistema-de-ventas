@@ -6,9 +6,12 @@ export function ProtectedRoute({ children }) {
   const { user, loading } = useAuthContext();
   const router = useRouter();
 
-  if (loading) return <h1>Loading</h1>;
+  if (loading) return <p>Cargando...</p>;
 
-  if (!user) return router.push("/login");
+  if (!user) {
+    router.push("/login");
+    return <p>Redireccionando...</p>;
+  }
 
   return <>{children}</>;
 }

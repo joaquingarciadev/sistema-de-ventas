@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import Sidebar from "./Sidebar";
@@ -34,9 +34,8 @@ export default function Layout({ children }) {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login");
     } catch (error) {
-      alert(error.message);
+      alert(error);
     }
   };
 
@@ -73,7 +72,6 @@ export default function Layout({ children }) {
             >
               <Link href={link.pathname} replace>
                 {link.icon}
-                &nbsp;&nbsp;&nbsp;
                 {link.label}
               </Link>
             </li>
@@ -96,7 +94,7 @@ export default function Layout({ children }) {
               }
               items={[
                 <Link href="/app/user">Mi cuenta</Link>,
-                <li onClick={handleLogout}>Cerrar sesión</li>,
+                <span onClick={handleLogout}>Cerrar sesión</span>,
               ]}
             />
             <button

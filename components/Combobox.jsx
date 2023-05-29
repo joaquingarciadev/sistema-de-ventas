@@ -32,9 +32,9 @@ import { useEffect, useRef, useState } from "react";
 }
 
 .combobox-option {
-  margin-bottom: -1px;
   background: #fff;
   border: 1px solid #e5e5e5;
+  border-top: none;
   cursor: pointer;
 }
 
@@ -51,7 +51,7 @@ import { useEffect, useRef, useState } from "react";
 }
 */
 
-export default function Combobox({ options, onChange }) {
+export default function Combobox({ options, onChange, reset }) {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [selectedOption, setSelectedOption] = useState(null);
@@ -89,7 +89,7 @@ export default function Combobox({ options, onChange }) {
   useEffect(() => {
     if (isOpen) inputRef.current.focus();
     if (input === "" || input === selectedOption?.label) showAllOptions();
-    if (isOpen && selectedOption) setInput(selectedOption.label);
+    if (selectedOption) setInput(selectedOption.label);
   }, [isOpen]);
 
   useEffect(() => {
@@ -101,6 +101,10 @@ export default function Combobox({ options, onChange }) {
       });
     }
   }, [isOpen, activeIndex]);
+
+  useEffect(() => {
+    if (reset) handleReset();
+  }, [reset]);
 
   const showAllOptions = () => {
     const newOptions = options;
@@ -132,6 +136,12 @@ export default function Combobox({ options, onChange }) {
     } else if (event.key === "Enter" && activeIndex > -1) {
       handleOptionSelect(filteredOptions[activeIndex]);
     }
+  };
+
+  const handleReset = () => {
+    setInput("");
+    setSelectedOption(null);
+    showAllOptions();
   };
 
   return (

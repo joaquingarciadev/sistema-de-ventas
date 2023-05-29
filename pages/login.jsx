@@ -23,7 +23,6 @@ export default function Login() {
     e.preventDefault();
     try {
       await login(form.email, form.password);
-      router.push("/app/add-sale");
     } catch (error) {
       alert(error.message);
     }
@@ -32,7 +31,6 @@ export default function Login() {
   const handleGoogleSignin = async () => {
     try {
       await loginWithGoogle();
-      router.push("/app/add-sale");
     } catch (error) {
       alert(error.message);
     }
@@ -66,7 +64,11 @@ export default function Login() {
         </label>
         <div>
           <p>
-            ¿No tienes cuenta? <Link href="/signup">Regístrate</Link>
+            ¿No tienes cuenta?
+            {" "}
+            <b>
+              <Link href="/signup">Regístrate</Link>
+            </b>
           </p>
         </div>
         <button type="submit">Iniciar sesión</button>
