@@ -3,13 +3,13 @@ import { useEffect, useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Modal from "@/components/Modal";
 import LayoutPDF from "@/components/LayoutPDF";
+import { FileText, Download } from "@/public/icons";
 
 import MUIDataTable from "mui-datatables";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 
 export default function Sales() {
   const [sales, setSales] = useState([]);
-  const [showModal, setShowModal] = useState(false);
   const [sale, setSale] = useState({
     id: 0,
     date: "",
@@ -17,6 +17,7 @@ export default function Sales() {
     products: [],
     total: 0,
   });
+  const [showModal, setShowModal] = useState(false);
   const { user } = useAuthContext();
 
   // This code uses the useState hook to set the value of the isClient variable to true. It then uses the useEffect hook to set the value of the isClient variable to true when the component is mounted.
@@ -129,11 +130,15 @@ export default function Sales() {
             options: {
               customBodyRender: (value, tableMeta, updateValue) => {
                 return (
-                  <button onClick={() => handleClick(tableMeta.rowData[1])}>
-                    Detalles
-                  </button>
+                  <li onClick={() => handleClick(tableMeta.rowData[1])}>
+                    <FileText />
+                  </li>
                 );
               },
+              print: false,
+              download: false,
+              filter: false,
+              sort: false,
             },
           },
         ]}
@@ -155,7 +160,13 @@ export default function Sales() {
                 fileName="document.pdf"
               >
                 {({ blob, url, loading, error }) =>
-                  loading ? "Cargando documento..." : <button>Descargar</button>
+                  loading ? (
+                    "Cargando documento..."
+                  ) : (
+                    <button>
+                      Descargar <Download />
+                    </button>
+                  )
                 }
               </PDFDownloadLink>
             )}

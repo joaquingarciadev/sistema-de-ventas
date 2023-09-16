@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useAuthContext } from "@/contexts/AuthContext";
 import Combobox from "@/components/Combobox";
+import { Trash } from "@/public/icons";
 
 import MUIDataTable from "mui-datatables";
 
@@ -204,15 +205,19 @@ export default function AddSale() {
       options: {
         customBodyRender: (value, tableMeta, updateValue) => {
           return (
-            <button
+            <li
               onClick={() => {
                 handleDeleteProduct(tableMeta.rowData[0]);
               }}
             >
-              Quitar
-            </button>
+              <Trash />
+            </li>
           );
         },
+        print: false,
+        download: false,
+        filter: false,
+        sort: false,
       },
     },
   ];

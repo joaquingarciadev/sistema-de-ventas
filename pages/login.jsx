@@ -64,19 +64,19 @@ export default function Login() {
         </label>
         <div>
           <p>
-            ¿No tienes cuenta?
-            {" "}
+            ¿No tienes cuenta?{" "}
             <b>
               <Link href="/signup">Regístrate</Link>
             </b>
           </p>
         </div>
-        <button type="submit">Iniciar sesión</button>
+        <div className="col-group">
+          <button type="submit">Iniciar sesión</button>
+          <button type="button" className="btn-social" onClick={handleGoogleSignin}>
+            <i className="fab fa-google"></i> &nbsp; Iniciar sesión con Google
+          </button>
+        </div>
       </form>
-      <button onClick={handleGoogleSignin}>
-        {" "}
-        <i className="fab fa-google"></i> &nbsp; Iniciar sesión con Google
-      </button>
     </div>
   );
 }
